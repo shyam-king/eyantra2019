@@ -1,36 +1,26 @@
-//The following code enable the sensors and controls
-//Don't change this file
-
 #include "CB_Task_1_Predef.h"
 
 simxInt ID = 0;
-simxUChar detection_state = 0;
 simxUChar* lineSensorOutput = new simxUChar[7]();
+simxUChar* colorSensorOutput = new simxUChar[3](), detection_state = 0;
 simxFloat detected_point[3] = { 0,0,0 };
-unsigned long color_sensor_pulse_count = 0;
+unsigned int color_sensor_pulse_count = 0;
 simxInt dir_left = 0, dir_right = 0, vis_error, prox_error, place_handle = -3;
-simxInt* res = new simxInt[2]();
-simxInt* res_left = new simxInt[2]();
-simxInt* res_right = new simxInt[2]();
-simxInt* res_middle = new simxInt[2](), * leftJoint = new simxInt[1](), * rightJoint = new simxInt[1](),  * lineSensor = new simxInt[1](), * leftLineSensor = new simxInt[1](), * middleLineSensor = new simxInt[1](), * rightLineSensor = new simxInt[1](), * eBot = new simxInt[1](), * proxSensor = new simxInt[1]();
+simxInt* res = new simxInt[2](), * obs1 = new simxInt[1](), * obs2 = new simxInt[1](), * obs3 = new simxInt[1](), * leftJoint = new simxInt[1](), * rightJoint = new simxInt[1](), * lineSensor = new simxInt[1](), * colorSensor = new simxInt[1](), * eBot = new simxInt[1](), * cuboid0 = new simxInt[1](), * cuboid = new simxInt[1](), * cuboid3 = new simxInt[1](), * cuboid4 = new simxInt[1](), * proxSensor = new simxInt[1](), * proxSensorRight = new simxInt[1](), * proxSensorLeft = new simxInt[1]();
 simxFloat linear_velocity_left = 0, linear_velocity_right = 0;
+const simxFloat posObv[3] = { 50,50,50 }, posPlaceRel[3] = { 0.125, 0, 0 };
 
 void getObjectHandles(void)
 {
 	simxGetObjectHandle(ID, "LeftJoint", leftJoint, simx_opmode_oneshot_wait);
-
 	simxGetObjectHandle(ID, "RightJoint", rightJoint, simx_opmode_oneshot_wait);
-	simxGetObjectHandle(ID, "LeftLineSensor", leftLineSensor, simx_opmode_oneshot_wait);
-	printf("%d\n", *leftLineSensor);
-	simxGetObjectHandle(ID, "RightLineSensor", rightLineSensor, simx_opmode_oneshot_wait);
-	printf("%d\n", *rightLineSensor);
-	simxGetObjectHandle(ID, "MiddleLineSensor", middleLineSensor, simx_opmode_oneshot_wait);
-	printf("%d\n", *middleLineSensor);
 	simxGetObjectHandle(ID, "LineSensor", lineSensor, simx_opmode_oneshot_wait);
+	simxGetObjectHandle(ID, "ColorSensor", colorSensor, simx_opmode_oneshot_wait);
 	simxGetObjectHandle(ID, "eBot", eBot, simx_opmode_oneshot_wait);
 	simxGetObjectHandle(ID, "ProximitySensorFront", proxSensor, simx_opmode_oneshot_wait);
-//	simxGetObjectHandle(ID, "ProximitySensorRight", proxSensor, simx_opmode_oneshot_wait);
-//	simxGetObjectHandle(ID, "ProximitySensorLeft", proxSensor, simx_opmode_oneshot_wait);
+	simxGetObjectHandle(ID, "ProximitySensorRight", proxSensorRight, simx_opmode_oneshot_wait);
+	simxGetObjectHandle(ID, "ProximitySensorLeft", proxSensorLeft, simx_opmode_oneshot_wait);
+	printf("\n Done obj handles\n");
 }
 
 void setJointVelocities(void)
@@ -47,8 +37,9 @@ void forward(void)
 
 void back(void)
 {
-	dir_left = dir_right = -1;
-	linear_velocity_left = linear_velocity_right = LIN_MAX;
+	dir_left = -1;
+	dir_right = -1;
+	linear_velocity_left = linear_velocity_right = -LIN_MAX;
 }
 
 void soft_right(void)
@@ -111,16 +102,28 @@ void velocity(int left_motor_velocity, int right_motor_velocity)
 
 void getLineSensorData(void)
 {
-	//simxGetVisionSensorImage(ID, *leftLineSensor, res_left, &leftLineSensorOutput, 1, simx_opmode_buffer);
-	//simxGetVisionSensorImage(ID, *middleLineSensor, res_middle, &middleLineSensorOutput, 1, simx_opmode_buffer);
-	//simxGetVisionSensorImage(ID, *rightLineSensor, res_right, &rightLineSensorOutput, 1, simx_opmode_buffer);
 	simxGetVisionSensorImage(ID, *lineSensor, res, &lineSensorOutput, 1, simx_opmode_buffer);
+
 }
 
-unsigned char getProxSensorDistance(void)
+void getColorSensorData(void)
+{
+	simxGetVisionSensorImage(ID, *colorSensor, res, &colorSensorOutput, 0, simx_opmode_buffer);
+}
+
+unsigned char getProxSensorDistance(unsigned char ch_no)
 {
 	unsigned char retval = 140;
-	prox_error = simxReadProximitySensor(ID, *proxSensor, &detection_state, detected_point, NULL, NULL, simx_opmode_buffer);
+	if (ch_no == FRONT_IR_ADC_CHANNEL)
+		prox_error = simxReadProximitySensor(ID, *proxSensor, &detection_state, detected_point, NULL, NULL, simx_opmode_buffer);
+	else if (ch_no == LEFT_IR_ADC_CHANNEL)
+	{
+		prox_error = simxReadProximitySensor(ID, *proxSensorLeft, &detection_state, detected_point, NULL, NULL, simx_opmode_buffer);
+	}
+	else if (ch_no == RIGHT_IR_ADC_CHANNEL)
+	{
+		prox_error = simxReadProximitySensor(ID, *proxSensorRight, &detection_state, detected_point, NULL, NULL, simx_opmode_buffer);
+	}
 	if (detection_state != 0)
 	{
 		detection_state = 0;
@@ -132,6 +135,29 @@ unsigned char getProxSensorDistance(void)
 }
 
 
+void filter_red(void)
+{
+	getColorSensorData();
+	color_sensor_pulse_count = (unsigned int)(colorSensorOutput[0] * 5000 / 255.0) + (rand() % 1001);
+}
+
+void filter_green(void)
+{
+	getColorSensorData();
+	color_sensor_pulse_count = (unsigned int)(colorSensorOutput[1] * 5000 / 255.0) + (rand() % 1001);
+}
+
+void filter_blue(void)
+{
+	getColorSensorData();
+	color_sensor_pulse_count = (unsigned int)(colorSensorOutput[2] * 5000 / 255.0) + (rand() % 1001);
+}
+
+void filter_clear(void)
+{
+	getColorSensorData();
+	color_sensor_pulse_count = (unsigned int)((colorSensorOutput[0] + colorSensorOutput[1] + colorSensorOutput[2]) * 5000 / 255.0) + (rand() % 1001);
+}
 
 
 int initial(void)
@@ -146,6 +172,7 @@ int initial(void)
 		printf("Connection Success ... \n");
 	else
 		printf("Connection Fail");
+
 
 	return clientID;
 }
@@ -168,34 +195,29 @@ int simulatorStart(int ID)
 
 void initVisionSensors(void)
 {
-	vis_error = simx_error_novalue_flag;
-	/*do
-		vis_error = simxGetVisionSensorImage(ID, *leftLineSensor, res_left, &leftLineSensorOutput, 1, simx_opmode_streaming);
-	while (vis_error != simx_return_ok || vis_error == simx_error_novalue_flag);
-	vis_error = simx_error_novalue_flag;
-	do
-		vis_error = simxGetVisionSensorImage(ID, *middleLineSensor, res_middle, &middleLineSensorOutput, 1, simx_opmode_streaming);
-	while (vis_error != simx_return_ok || vis_error == simx_error_novalue_flag);
-	vis_error = simx_error_novalue_flag;
-	do
-		vis_error = simxGetVisionSensorImage(ID, *rightLineSensor, res_right, &rightLineSensorOutput, 1, simx_opmode_streaming);
-	while (vis_error != simx_return_ok || vis_error == simx_error_novalue_flag);
-	vis_error = simx_error_novalue_flag;*/
 	do
 		vis_error = simxGetVisionSensorImage(ID, *lineSensor, res, &lineSensorOutput, 1, simx_opmode_streaming);
+	while (vis_error != simx_return_ok || vis_error == simx_error_novalue_flag);
+	do
+		vis_error = simxGetVisionSensorImage(ID, *colorSensor, res, &colorSensorOutput, 0, simx_opmode_streaming);
 	while (vis_error != simx_return_ok || vis_error == simx_error_novalue_flag);
 	for (int i = 0; i < VIS_SEN_INIT_VAL; i++)
 	{
 		getLineSensorData();
-
+		getColorSensorData();
 	}
-	printf("Vision Sensors Initialized");
 }
 
 void initProxSensor(void)
 {
 	do
 		prox_error = simxReadProximitySensor(ID, *proxSensor, NULL, NULL, NULL, NULL, simx_opmode_streaming);
+	while (prox_error != simx_return_ok || prox_error == simx_error_novalue_flag);
+	do
+		prox_error = simxReadProximitySensor(ID, *proxSensorRight, NULL, NULL, NULL, NULL, simx_opmode_streaming);
+	while (prox_error != simx_return_ok || prox_error == simx_error_novalue_flag);
+	do
+		prox_error = simxReadProximitySensor(ID, *proxSensorLeft, NULL, NULL, NULL, NULL, simx_opmode_streaming);
 	while (prox_error != simx_return_ok || prox_error == simx_error_novalue_flag);
 }
 
@@ -205,19 +227,59 @@ void initSensors(void)
 	initProxSensor();
 }
 
+void pick(void)
+{
+
+	//Set OBj position to oblvion
+	simxInt pickDetectObjectHandle = -2;
+	do
+		prox_error = simxReadProximitySensor(ID, *proxSensor, NULL, NULL, &pickDetectObjectHandle, NULL, simx_opmode_buffer);
+	while (prox_error != simx_return_ok || prox_error == simx_error_novalue_flag);
+	if (pickDetectObjectHandle != -2)
+	{
+		if (pickDetectObjectHandle == *obs1 || pickDetectObjectHandle == *obs2 || pickDetectObjectHandle == *obs3)
+		{
+			printf("\nCan't pick an obstacle!");
+		}
+		else
+		{
+			if (place_handle == -3)
+				simxSetObjectPosition(ID, pickDetectObjectHandle, -1, posObv, simx_opmode_oneshot);
+			else
+				printf("\nCan't pick, another block already picked up.");
+		}
+
+	}
+	else
+		printf("\nNo object to pick.");
+	place_handle = pickDetectObjectHandle;
+}
+
+void place(void)
+{
+	//setobjpos relative to Robot
+	if (place_handle != -3)
+	{
+		simxSetObjectPosition(ID, place_handle, *eBot, posPlaceRel, simx_opmode_oneshot);
+		place_handle = -3;
+	}
+	else
+		printf("Nothing has been picked");
+
+}
 
 
 unsigned char ADC_Conversion(unsigned char ch_no)
 {
-	if (ch_no == 1)//Left Line Sensor
-		return ~(lineSensorOutput[LEFT_PIXEL]);
+	if (ch_no == 1)	//Left Line Sensor
+		return ~lineSensorOutput[LEFT_PIXEL];
 	else if (ch_no == 2)//Middle Line Sensor
-		return ~(lineSensorOutput[MIDDLE_PIXEL]);
+		return ~lineSensorOutput[MIDDLE_PIXEL];
 	else if (ch_no == 3)//Right Line Sensor
-		return ~(lineSensorOutput[RIGHT_PIXEL]);
-	else if (ch_no == FRONT_IR_ADC_CHANNEL) //Channel for Proximity sensor
-		return getProxSensorDistance();
-	return 13;
+		return ~lineSensorOutput[RIGHT_PIXEL];
+	else if (ch_no == FRONT_IR_ADC_CHANNEL || ch_no == LEFT_IR_ADC_CHANNEL || ch_no == RIGHT_IR_ADC_CHANNEL) //Channel for Proximity sensor
+		return getProxSensorDistance(ch_no);
+	return 255;
 }
 
 
@@ -227,12 +289,19 @@ void _delay_ms(unsigned int ms)
 }
 
 
-void init(void)
+int init(void)
 {
 	ID = initial();
-	getObjectHandles();
-	int check = simulatorStart(ID);
-	initSensors();
+	if (ID == -1)
+		return 0;
+	else
+	{
+
+		getObjectHandles();
+		int check = simulatorStart(ID);
+		initSensors();
+		return 1;
+	}
 
 }
 
@@ -257,6 +326,4 @@ void threadCalls(void)
 		setJointVelocities();
 		getLineSensorData();
 	}
-
 }
-
