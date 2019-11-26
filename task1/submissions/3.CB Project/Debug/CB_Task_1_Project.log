@@ -1,4 +1,4 @@
 ﻿  CB_Task_1_Sandbox.cpp
-c:\users\shyam murugan\documents\eyantra\task 1\eyantra2019\task1\submissions\3.cb project\cb_task_1_sandbox.cpp(169): warning C4838: conversion from 'unsigned char' to 'float' requires a narrowing conversion
-c:\users\shyam murugan\documents\eyantra\task 1\eyantra2019\task1\submissions\3.cb project\cb_task_1_sandbox.cpp(209): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\users\shyam murugan\documents\eyantra\task 1\eyantra2019\task1\submissions\3.cb project\cb_task_1_sandbox.cpp(384): warning C4838: conversion from 'unsigned char' to 'float' requires a narrowing conversion
+c:\users\shyam murugan\documents\eyantra\task 1\eyantra2019\task1\submissions\3.cb project\cb_task_1_sandbox.cpp(424): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
   CB_Task_1_Project.vcxproj -> C:\Users\Shyam Murugan\Documents\eYantra\Task 1\eyantra2019\task1\submissions\3.CB Project\Debug\CB_Task_1_Project.exe
