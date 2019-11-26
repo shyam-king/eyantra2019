@@ -38,7 +38,7 @@ void forward(void)
 void back(void)
 {
 	dir_left = dir_right = -1;
-	linear_velocity_left = linear_velocity_right = LIN_MAX;
+	linear_velocity_left = linear_velocity_right = -LIN_MAX;
 }
 
 void soft_right(void)
