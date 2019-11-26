@@ -9,28 +9,27 @@
 #include <cstring>
 #include <stack>
 
-
+//CONSTANTS
 #define OVERSHOOT_DELAY 250
 #define BASE_SPEED 255
 #define TURN_OVERSHOOT 280
 #define ADJUSTMENT_DELAY 200
-//1.2
-#define KP 1.6f
-//-.5
-#define KD -.5f
 #define TURN_SPEED 135
+
+//PID CONSTANTS
+#define KP 1.6f
+#define KD -.5f
+
 
 using namespace std;
 
-typedef pair<int8_t, int8_t> Coordinate;
+typedef pair<int8_t, int8_t> Coordinate; //To store the position of various nodes
 
-bool house5placement = false; //adjustment for house 5
+bool house5placement = false; //adjustment for house 5 since it is missing a node
 bool complete = false; //if the goal has been reached
-unsigned char sensor = 0b010, prevValidSensor = 0; //The sensor readings in a better format
-bool blackMode = false; //for the white line following in the last segment
-bool wallMode = false; //to start or stop following walls
-uint8_t sensorValidity = 0; //change sensor value only if validity is reasonable
-uint8_t totalRequirements = 0;
+unsigned char sensor = 0b010; //The sensor readings in a better format
+bool blackMode = false; //for the white line following 
+uint8_t totalRequirements = 0; //number of requirements that are yet to be met
 
 //ENUM TO IDENTIFY KIND OF NODES
 enum NODETYPE {
@@ -45,19 +44,13 @@ enum NODETYPE {
 	H1, H2, H3, H4, H5
 };
 
-//ENUM Direction for path_generator
+//ENUM Direction denotes the direction that the bot is currently facing
 enum Direction {
 	UP, RIGHT, DOWN, LEFT
-} currentDir;
-char dirs[] = "URDL";
+} currentDir; //currentDir is the direction that the bot is currently facing
 
-void changeDirection(int amount) {
-	int x = currentDir;
-	x += amount;
-	x %= 4;
-	currentDir = (Direction)(x);
-}
-
+//Status enum to denote the current status of the bot
+//used to determine whether the next step is to get a block, place it or reach the start node.
 enum Status {
 	PickedUpBlock,
 	PlacedBlock,
@@ -68,7 +61,7 @@ enum Status {
 //class Node to represent any node
 class Node {
 public:
-	NODETYPE type;
+	NODETYPE type; //junction, color, house
 	vector<Node*> nodes; //nodes connected with this node
 	
 	//position used to measure distance between nodes and relative directions
@@ -76,12 +69,13 @@ public:
 
 	Node(NODETYPE _type = JUNCTION, Coordinate _position = Coordinate(0, 0));
 
-	//will join two nodes
+	//will join two nodes (must be called once per pair)
 	void join(Node &a) {
 		a.nodes.push_back(this);
 		nodes.push_back(&a);
 	}
 
+	//print the position of the node along with a label
 	void print (const char* label = "") const {
 		printf(label);
 		printf("%d, %d", position.first, position.second);
@@ -91,35 +85,51 @@ public:
 	double distanceTo(Node x) {
 		return pow(x.position.first - position.first, 2) + pow(x.position.second - position.second, 2);
 	}
-} goalNode, currentNode; // goalNode is used for prioritizing nodes
+} currentNode; //currentNode is the node that the bot is currently present
 
-vector<Node*> colorNodes;
-map<NODETYPE, pair<Node*, vector<NODETYPE>>> requirements;
-stack<const Node*> pathToFollow;
+vector<Node*> colorNodes; //All nodes that contain a cmaterial to be picked
+map<NODETYPE, pair<Node*, vector<NODETYPE>>> requirements; //list of houses-indexed requirement list
+stack<const Node*> pathToFollow; //list of nodes to be traversed by the bot (next node is always at top)
 
+//constructor for Node
 Node::Node(NODETYPE _type, Coordinate _position) {
 	type = _type;
 	position = _position;
 	nodes = vector<Node*>();
 
-	if (type >= 2 && type <= 7) {
+	
+	if (type >= 2 && type <= 7) { //add the node to colorNodes if it is a color type
 		colorNodes.push_back(this);
 	}
-	else if (type >= H1 && type <= H5) {
+	else if (type >= H1 && type <= H5) { //create a requirements index if the node is a house type
 		requirements[type].first = this;
 	}
 }
 
-bool operator<(Node a, Node b) {
-	//we want the least distance to be prioritized
-	return a.distanceTo(goalNode) > b.distanceTo(goalNode);
-}
-
+//used for the priority_queue sorting in pathGenerate()
 struct NodeCostCompare {
 	bool operator()(pair<Node*, double> a, pair<Node*, double> b) {
 		return a.second > b.second;
 	}
 };
+
+
+/*
+*
+* Function Name: changeDirection
+* Input: amount: number to add (amount * 90 degrees will be added)
+* Output: void
+* Logic: cincrements the currentDir by amount
+stores amount%4 instead (enum Direction contains only 4 constants 0-3)
+* Example Call: changeDirection(2);
+*/
+void changeDirection(int amount) {
+	int x = currentDir;
+	x += amount;
+	x %= 4;
+	currentDir = (Direction)(x);
+}
+
 
 /*
 *
@@ -148,7 +158,7 @@ Node* closest_house_node(Node &fromNode, NODETYPE requirement) {
 			}
 		}
 
-		//if requirement matches
+		//if requirement matches, prioritise least distance
 		if (f) {
 			if (target == NULL) {
 				target = x.second.first;
@@ -163,6 +173,18 @@ Node* closest_house_node(Node &fromNode, NODETYPE requirement) {
 	return target;
 }
 
+/*
+*
+* Function Name: nextJunction
+* Input: void
+* Output: char : represents the action to be taken
+* Logic: based on the nodes available in pathToFollow, return the action to be taken:
+		 turning actions : L,R,S
+		 picking action: P
+		 placing action: p
+* Example Call: char action = nextJunction();
+*
+*/
 char nextJunction() {
 	const Node* to = pathToFollow.top();
 	Coordinate from = to->position;
@@ -177,9 +199,10 @@ char nextJunction() {
 
 		if (to->type >= BLACK && to->type <= PINK)
 			return 'P';
-	}
 
-	
+		if (to->type == START)
+			return 'E';
+	}
 
 	switch (currentDir) {
 	case UP:
@@ -270,6 +293,7 @@ Node* closest_color_node(Node& from_node) {
 			if (f) break;
 		}
 
+		//prioritise minimum distance
 		if (f) {
 			if (target == NULL) {
 				target = n;
@@ -288,35 +312,32 @@ Node* closest_color_node(Node& from_node) {
 
 /*
 *
-* Function Name: path_generator
-* Input: from_node, to_node, path_buffer
+* Function Name: pathGenerate
+* Input: from_node, to_node
 * Output: void 
 * Logic: implements A* algorithm and fills the pathToFollow with the shortest
 		path from from_node to to_node that the bot follows
-* Example Call: path_generator(start_node, brown_node, pathToTraverse);
+* Example Call: pathGenerate(start_node, to_node);
 *
 */
-void path_generator(Node &from_node, Node &to_node) {
-	priority_queue<pair<Node*, double>, vector<pair<Node*, double>>, NodeCostCompare> toTraverse;
-	map<Coordinate, const Node*> cameFrom;
-	vector<Coordinate> traversed;
-	const Node* t = NULL, *tt = NULL;
+void pathGenerate(Node &from_node, Node &to_node) {
+	priority_queue<pair<Node*, double>, vector<pair<Node*, double>>, NodeCostCompare> toTraverse; //next node is top
+	map<Coordinate, const Node*> cameFrom; //to retrace steps
+	vector<Coordinate> traversed; //to prevent checking the same nodes again
+	const Node *traversedNode = NULL; //the current node under consideration
 
-	goalNode = to_node; //so that it is properly sorted
-	toTraverse.push(pair<Node*, double>(&from_node, 0));
-
-	double costSoFar = 0;
+	toTraverse.push(pair<Node*, double>(&from_node, 0)); //push the root node
 	
 	while (!toTraverse.empty()) {
-		tt = (toTraverse.top().first);
-		traversed.push_back(tt->position);
+		traversedNode = (toTraverse.top().first);
+		traversed.push_back(traversedNode->position);
 		toTraverse.pop();
 
-		if (tt->position == to_node.position) {
+		if (traversedNode->position == to_node.position) {
 			break;
 		}
 		
-		for (auto n : tt->nodes) {
+		for (auto n : traversedNode->nodes) {
 			bool found = false;
 			for (auto x : traversed) {
 				if (n->position == x) {
@@ -325,20 +346,20 @@ void path_generator(Node &from_node, Node &to_node) {
 				}
 			}
 			if (!found) {
-				double cost = n->distanceTo(*tt) + n->distanceTo(to_node);
+				double cost = n->distanceTo(*traversedNode) + n->distanceTo(to_node);
 				toTraverse.push(pair<Node*, double>(n, cost));
-				cameFrom[n->position] = tt;
+				cameFrom[n->position] = traversedNode;
 			}
 		}
 	};
 
-	//reversing the path using stack operations
-	Coordinate pos = tt->position;
-
+	//retracing the path using cameFrom values and pushing it to pathToFollow stack
+	//stack operations reverses the path automatically
+	Coordinate pos = traversedNode->position;
 	while (pos != from_node.position) {
-		pathToFollow.push(tt);
-		tt = cameFrom[pos];
-		pos = tt->position;
+		pathToFollow.push(traversedNode);
+		traversedNode = cameFrom[pos];
+		pos = traversedNode->position;
 	}
 }
 
@@ -409,22 +430,11 @@ void readSensors() {
 		((ADC_Conversion(2) >= 100) << 1) |
 		((ADC_Conversion(1) >= 100) << 2);
 
-	if (blackMode) sensorRead = 0b111 - sensorRead;
+	if (blackMode) sensorRead = 0b111 - sensorRead; //invert in case following white line
 
 	sensor = sensorRead;
 }
 
-/*
-*
-* Function Name: readProxSensors
-* Input: void
-* Output: void
-* Logic: Reads the proximity sensor values and sets the sensor value accordingly
-* Example Call: readProxSensors();
-*/
-void readProxSensors() {
-	
-}
 
 /*
 *
@@ -436,101 +446,106 @@ void readProxSensors() {
 */
 void junctionDetect() {
 	readSensors();
-	if (!wallMode) {
 
-		if (sensor == 0b101) {
-			blackMode = !blackMode;
-			//printf("\nblack mode toggled");
-		}
-
-		if (sensor == 0b111) {
-			//printf("\njunction detected");
-			stop();
-			char n = nextJunction();
-			printf("%c", n);
-			switch (n) {
-			case 'R':
-				changeDirection(1);
-				forward();
-				_delay_ms(OVERSHOOT_DELAY);
-				right();
-				velocity(TURN_SPEED, TURN_SPEED);
-				_delay_ms(TURN_OVERSHOOT);
-				while (sensor != 0b010) {
-					readSensors();
-				}
-				break;
-
-			case 'L':
-				changeDirection(3);
-				forward();
-				_delay_ms(OVERSHOOT_DELAY);
-				left();
-				velocity(TURN_SPEED, TURN_SPEED);
-				_delay_ms(TURN_OVERSHOOT);
-				while (sensor != 0b010) {
-					readSensors();
-				}
-				break;
-
-			case 'S':
-				forward();
-				while (sensor == 0b111) {
-					readSensors();
-				}
-				break;
-
-			case 'E':
-				stop();
-				complete = true;
-				break;
-
-			case 'p':
-				changeDirection(2);
-				stop();
-				if (house5placement) {
-					back();
-					_delay_ms(25);
-				}
-				else {
-					forward();
-				}
-				_delay_ms(ADJUSTMENT_DELAY);
-				stop();
-				place();
-				//TURN AROUND
-				right();
-				velocity(TURN_SPEED, TURN_SPEED);
-				_delay_ms(TURN_OVERSHOOT);
-				while (sensor != 0b010) {
-					readSensors();
-				}
-				stop();
-				complete = true;
-				break;
-
-			case 'P':
-				changeDirection(2);
-				stop();
-				pick();
-
-				//TURN AROUND
-				right();
-				velocity(TURN_SPEED, TURN_SPEED);
-				_delay_ms(TURN_OVERSHOOT);
-				while (sensor != 0b010) {
-					readSensors();
-				}
-				stop();
-				complete = true;
-				break;
-			}
-
-			if (!complete) forward();
-		}
+	if (sensor == 0b101) {
+		blackMode = !blackMode;
+		printf("\nblack mode toggled");
 	}
-	
-	
+
+	if (sensor == 0b111) {
+		printf("\njunction detected");
+		stop();
+		char n = nextJunction();
+		switch (n) {
+		case 'R':
+			changeDirection(1);
+			forward();
+			_delay_ms(OVERSHOOT_DELAY);
+			right();
+			velocity(TURN_SPEED, TURN_SPEED);
+			_delay_ms(TURN_OVERSHOOT);
+			while (sensor != 0b010) {
+				readSensors();
+			}
+			break;
+
+		case 'L':
+			changeDirection(3);
+			forward();
+			_delay_ms(OVERSHOOT_DELAY);
+			left();
+			velocity(TURN_SPEED, TURN_SPEED);
+			_delay_ms(TURN_OVERSHOOT);
+			while (sensor != 0b010) {
+				readSensors();
+			}
+			break;
+
+		case 'S':
+			forward();
+			while (sensor == 0b111) {
+				readSensors();
+			}
+			break;
+
+		case 'E':
+			stop();
+			complete = true;
+			break;
+
+		case 'p':
+			changeDirection(2);
+			stop();
+			if (house5placement) {
+				back();
+				_delay_ms(50);
+			}
+			else {
+				forward();
+			}
+			_delay_ms(ADJUSTMENT_DELAY);
+			stop();
+			place();
+
+			if (house5placement) {
+				forward();
+				_delay_ms(50);
+			}
+			else {
+				back();
+			}
+			_delay_ms(ADJUSTMENT_DELAY);
+			stop();
+			//TURN AROUND
+			right();
+			velocity(TURN_SPEED, TURN_SPEED);
+			_delay_ms(TURN_OVERSHOOT);
+			while (sensor != 0b010) {
+				readSensors();
+			}
+			stop();
+			complete = true;
+			break;
+
+		case 'P':
+			changeDirection(2);
+			stop();
+			pick();
+
+			//TURN AROUND
+			right();
+			velocity(TURN_SPEED, TURN_SPEED);
+			_delay_ms(TURN_OVERSHOOT);
+			while (sensor != 0b010) {
+				readSensors();
+			}
+			stop();
+			complete = true;
+			break;
+		}
+
+		if (!complete) forward();
+	}
 }
 
 
@@ -552,7 +567,7 @@ float lineSensorRead() {
 		ADC_Conversion(3)
 	};
 
-	if (blackMode) {
+	if (blackMode) { //invert in case of white line following
 		sensors[0] = 255 - sensors[0];
 		sensors[1] = 255 - sensors[1];
 		sensors[2] = 255 - sensors[2];
@@ -695,7 +710,7 @@ void Task_1_2(void)
 	junctions[11].join(junctions[13]);
 	junctions[11].join(junctions[14]);
 	junctions[14].join(junctions[16]);
-	junctions[16].join(junctions[17]); //check
+	junctions[16].join(junctions[17]); 
 	junctions[16].join(junctions[19]);
 	junctions[19].join(junctions[20]);
 	junctions[20].join(junctions[21]);
@@ -708,7 +723,7 @@ void Task_1_2(void)
 	junctions[25].join(junctions[28]);
 	junctions[28].join(junctions[29]);
 	junctions[28].join(junctions[30]);
-	//junctions[28].join(junctions[4]); (wall following)
+	//junctions[28].join(junctions[4]); (wall following not implemented)
 	junctions[30].join(junctions[31]);
 	junctions[30].join(junctions[32]);
 	junctions[30].join(junctions[33]);
@@ -735,21 +750,20 @@ void Task_1_2(void)
 			if (totalRequirements) {
 				Node *colorNode = closest_color_node(currentNode);
 				pickedUpBlock = colorNode->type;
-				path_generator(currentNode, *colorNode);
+				pathGenerate(currentNode, *colorNode);
 
 				colorNodes.erase(std::remove(colorNodes.begin(), colorNodes.end(), colorNode), colorNodes.end());
 			}
 			else {
-				path_generator(currentNode, START_NODE);
+				pathGenerate(currentNode, START_NODE);
 				currentStatus = done;
-				complete = false;
 			}
 		}
 		else if (currentStatus == PickedUpBlock) {
 			//find the closest house with that requirement
 			
 			Node *houseNode = closest_house_node(currentNode, pickedUpBlock);
-			path_generator(currentNode, *houseNode);
+			pathGenerate(currentNode, *houseNode);
 
 			if (houseNode->type == H5) house5placement = true;
 			else house5placement = false;
@@ -769,7 +783,8 @@ void Task_1_2(void)
 			pidControl();
 		}
 
+		//toggle between picked and placed states
 		if (currentStatus == PlacedBlock) currentStatus = PickedUpBlock;
-		else currentStatus = PlacedBlock;
+		else if (currentStatus == PickedUpBlock) currentStatus = PlacedBlock;
 	}
 }

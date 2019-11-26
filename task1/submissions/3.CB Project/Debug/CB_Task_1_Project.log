@@ -1,5 +1,5 @@
 ﻿  CB_Task_1_Sandbox.cpp
-c:\users\shyam murugan\documents\eyantra\task 1\eyantra2019\task1\submissions\3.cb project\cb_task_1_sandbox.cpp(553): warning C4838: conversion from 'unsigned char' to 'float' requires a narrowing conversion
-c:\users\shyam murugan\documents\eyantra\task 1\eyantra2019\task1\submissions\3.cb project\cb_task_1_sandbox.cpp(587): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-c:\users\shyam murugan\documents\eyantra\task 1\eyantra2019\task1\submissions\3.cb project\cb_task_1_sandbox.cpp(243): warning C4715: 'nextJunction': not all control paths return a value
+c:\users\shyam murugan\documents\eyantra\task 1\eyantra2019\task1\submissions\3.cb project\cb_task_1_sandbox.cpp(568): warning C4838: conversion from 'unsigned char' to 'float' requires a narrowing conversion
+c:\users\shyam murugan\documents\eyantra\task 1\eyantra2019\task1\submissions\3.cb project\cb_task_1_sandbox.cpp(602): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+c:\users\shyam murugan\documents\eyantra\task 1\eyantra2019\task1\submissions\3.cb project\cb_task_1_sandbox.cpp(266): warning C4715: 'nextJunction': not all control paths return a value
   CB_Task_1_Project.vcxproj -> C:\Users\Shyam Murugan\Documents\eYantra\Task 1\eyantra2019\task1\submissions\3.CB Project\Debug\CB_Task_1_Project.exe
