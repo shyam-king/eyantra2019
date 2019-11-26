@@ -17,8 +17,8 @@
 #define TURN_SPEED 135
 
 //PID CONSTANTS
-#define KP 1.6f
-#define KD -.5f
+#define KP 2.0f
+#define KD -.55f
 
 
 using namespace std;
@@ -449,11 +449,9 @@ void junctionDetect() {
 
 	if (sensor == 0b101) {
 		blackMode = !blackMode;
-		printf("\nblack mode toggled");
 	}
 
 	if (sensor == 0b111) {
-		printf("\njunction detected");
 		stop();
 		char n = nextJunction();
 		switch (n) {
@@ -483,12 +481,12 @@ void junctionDetect() {
 
 		case 'S':
 			forward();
-			while (sensor == 0b111) {
-				readSensors();
-			}
+			_delay_ms(500);
 			break;
 
 		case 'E':
+			forward();
+			_delay_ms(OVERSHOOT_DELAY);
 			stop();
 			complete = true;
 			break;
