@@ -9,4 +9,4 @@
 ## To-do
 - [ ] Task1 - assignment
 - [x] Task1 - task 1.1 **(16 Nov deadline)**
-- [ ] Task1 - task 1.2 **(26 Nov deadline)** 
+- [x] Task1 - task 1.2 **(26 Nov deadline)** 
