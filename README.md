@@ -7,6 +7,7 @@
 - Jayamathangi 
 
 ## To-do
-- [ ] Task1 - assignment
-- [x] Task1 - task 1.1 **(16 Nov deadline)**
-- [x] Task1 - task 1.2 **(26 Nov deadline)** 
+- [.] Task 1
+- [.] Task 2
+- [ ] Hardware Testing (25/12/19)
+- [ ] Task 3 (8/1/20)
