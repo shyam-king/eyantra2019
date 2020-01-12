@@ -1,0 +1,24 @@
+- class names use UpperCamelCase
+- function names use lowerCamelCase
+- global variables and macros are UPPERCASE 
+- local variables use lowerCamelCase 
+- class methods using the same name as a member use _lowerCamelCase (with a preceeding underscore)
+- all methods are documented this way
+
+    /*
+    *   int parameter0:     first parameter description
+    *   char parameter1:    second parameter description
+    *   return int:         return value description
+    *   side-effects:       alterations to global variables or members that the function might apply which
+    *                       might be necessary to know, for example:
+                            someFunction uses timer0
+    */
+    int someFunction(int parameter0, char parameter1) {
+        ...
+    }
+
+  note: functions DO NOT have a top level description, thus, emphasizing self-descriptive function names.
+        There can be any number of comments in the body of the function that may be necessary to understand 
+        the statements.
+- all classes are kept in their own respective directories containing the header file(s) and source file(s).
+  The name of the folder is same as that of the class.
