@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Atmel Studio Solution File, Format Version 11.00
-Project("{E66E83B9-2572-4076-B26E-6BE79FF3018A}") = "eYantra", "eYantra.cppproj", "{39D0F662-72C5-4D64-A02F-7EB0CB528604}"
+Project("{E66E83B9-2572-4076-B26E-6BE79FF3018A}") = "eYantra", "eYantra\eYantra.cppproj", "{6DCFDC2E-F774-4EA1-AFE2-720921087E20}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -9,10 +9,10 @@ Global
 		Release|AVR = Release|AVR
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{39D0F662-72C5-4D64-A02F-7EB0CB528604}.Debug|AVR.ActiveCfg = Debug|AVR
-		{39D0F662-72C5-4D64-A02F-7EB0CB528604}.Debug|AVR.Build.0 = Debug|AVR
-		{39D0F662-72C5-4D64-A02F-7EB0CB528604}.Release|AVR.ActiveCfg = Release|AVR
-		{39D0F662-72C5-4D64-A02F-7EB0CB528604}.Release|AVR.Build.0 = Release|AVR
+		{6DCFDC2E-F774-4EA1-AFE2-720921087E20}.Debug|AVR.ActiveCfg = Debug|AVR
+		{6DCFDC2E-F774-4EA1-AFE2-720921087E20}.Debug|AVR.Build.0 = Debug|AVR
+		{6DCFDC2E-F774-4EA1-AFE2-720921087E20}.Release|AVR.ActiveCfg = Release|AVR
+		{6DCFDC2E-F774-4EA1-AFE2-720921087E20}.Release|AVR.Build.0 = Release|AVR
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
