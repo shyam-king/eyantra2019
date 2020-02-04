@@ -7,6 +7,7 @@
 #include "UART.h"
 #include <avr/io.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 void Serial::init() {
     //set baud rate to 9600
@@ -34,4 +35,10 @@ void Serial::print(int value) {
     char temp[15];
     sprintf(temp, "%d", value);
     print(temp);
+}
+
+void Serial::print(float value) {
+	char temp[20];
+	dtostrf(value, 20, 2, temp);
+	print(temp);
 }

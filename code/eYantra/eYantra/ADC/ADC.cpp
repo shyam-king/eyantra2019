@@ -7,8 +7,8 @@
 
 #include "ADC.h"
 #include <avr/io.h>
-#include <avr/delay.h>
 #include <stdint.h>
+#include <util/delay.h>
 
 bool ADCInterface::initialized = false;
 

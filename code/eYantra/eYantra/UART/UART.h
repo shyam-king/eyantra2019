@@ -15,6 +15,7 @@ class Serial {
 	static void print(const char *);
 	static void println(const char*);
     static void print(int);
+	static void print(float);
 };
 
 
