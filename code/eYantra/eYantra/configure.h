@@ -21,5 +21,10 @@
 #define MOTOR_L_SPEED OCR0B
 #define MOTOR_R_SPEED OCR0A
 
+#define SERVO_MIN 921u
+#define SERVO_MAX 4424u
+#define SERVO_TOTAL 36864u
+
+#define COUNT_1MS 230
 
 #endif /* CONFIGURE_H_ */
