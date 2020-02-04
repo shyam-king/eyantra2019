@@ -11,6 +11,7 @@
 #define ADC_H_
 
 class ADCInterface {
+    static bool initialized;
     public:
 
     static uint16_t read(uint8_t channel);

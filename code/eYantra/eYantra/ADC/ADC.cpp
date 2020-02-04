@@ -8,16 +8,30 @@
 #include "ADC.h"
 #include <avr/io.h>
 #include <avr/delay.h>
+#include <stdint.h>
+
+bool ADCInterface::initialized = false;
 
 uint16_t ADCInterface::read(uint8_t channel) {
-    ADMUX = (ADMUX & ~0b111) | channel; // choose the channel
-    ADCSRA |= (1<< ADSC); // for starting a conversion
+    if (!initialized)
+        init();
 
+    ADCSRA &= ~(1 << ADEN);
+    ADMUX = channel; // choose the channel
+    ADCSRA |= (1 << ADEN);
+
+    ADCSRA |= (1 << ADSC);
     while(ADCSRA & (1<<ADSC) == 0); //wait for conversion
-    uint16_t val = ADC; //read converted value
+    uint16_t val = ADC;
+    ADCSRA |= (1 << ADIF);
 
-    ADCSRA |= (1 << ADIF); //clear the flag for next conversion
-    _delay_us(100);
+    _delay_ms(100);
+
+    ADCSRA |= (1 << ADSC);
+    while(ADCSRA & (1<<ADSC) == 0); //wait for conversion
+    val = ADC;
+    ADCSRA |= (1 << ADIF);
+
     return val;
 }
 
@@ -28,4 +42,6 @@ void ADCInterface::init() {
     //choose AVCC and right adjusted result
     ADMUX = 0;
     ACSR = 0X80;
+
+    initialized = true;
 }
