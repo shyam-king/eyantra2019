@@ -20,7 +20,7 @@ class LineSensors {
 
 class ProxSensors {
     public:
-    static int16_t readSensor(int channel);
+    static float readSensor(int channel);
 };
 
 

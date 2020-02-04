@@ -25,3 +25,8 @@ int16_t LineSensors::readLine() {
 
     return sum;
 }
+
+float ProxSensors::readSensor(int channel) {
+    float adcValue = ADCInterface::read(channel + 3);
+    return 1000/adcValue;
+}

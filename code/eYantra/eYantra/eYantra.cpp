@@ -10,8 +10,13 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
+
 #include "UART/UART.h"
 #include "ADC/ADC.h"
+#include "LCD/LCD.h"
+#include "Motor/Motor.h"
+#include "Servo/Servo.h"
+#include "Sensors/Sensors.h"
 
 void enableGlobalInterrupts() {
     SREG |= (1 << 7);
@@ -22,15 +27,20 @@ int main(void) {
     enableGlobalInterrupts();
     Serial::init();
     ADCInterface::init();
+    LCD::init();
+    Motor::init();
+    Servo::init();
 
     while(1) {
-        Serial::print(ADCInterface::read(0));
-        Serial::print("\t");
-        Serial::print(ADCInterface::read(1));
-        Serial::print("\t");
-        Serial::print(ADCInterface::read(2));
-        Serial::print("\n");
+        for (int i = 0; i <= 180; i += 20) {
+            Serial::print("Servo angle: ");
+            Serial::print(i);
+            Serial::print("\n");
 
-        _delay_ms(100);
+            Servo::setAngle(Servo::RIGHT, i);
+            Servo::setAngle(Servo::LEFT, i);
+            Servo::setAngle(Servo::CENTER, i);
+            _delay_ms(1000);
+        }
     }
 }
