@@ -9,6 +9,8 @@
 #include <avr/io.h>
 #include "../configure.h"
 
+#define abs(x) ((x)>0) ? (x) : -(x)
+
 //Using two channels of timer0 to control motor speed
 
 void Motor::init() {
@@ -69,4 +71,20 @@ void Motor::stopLeftMotor() {
 
 void Motor::stopRightMotor() {
     PORTB &= ~((1 << MOTOR_R_FRONT) | (1 << MOTOR_R_BACK));
+}
+
+void Motor::applyPIDCorrection(float correction) {
+    int16_t c = 255 - abs(correction);
+    
+    if (c > 255) c = 255;
+    if (c < 0) c = 0;
+
+    if (correction > 0) {
+        Motor::setLeftSpeed(c);
+        Motor::setRightSpeed(255);
+    }
+    else {
+        Motor::setLeftSpeed(255);
+        Motor::setRightSpeed(c);
+    }
 }

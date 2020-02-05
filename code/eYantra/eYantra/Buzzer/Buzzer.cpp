@@ -10,13 +10,14 @@
 
 void Buzzer::init() {
     DDRH |= (1 << 0);
-    PORTH &= ~(1 << 0);
-}
-
-void Buzzer::buzz() {
+    //PORTH &= ~(1 << 0);
     PORTH |= (1 << 0);
 }
 
 void Buzzer::stopBuzz() {
+    PORTH |= (1 << 0);
+}
+
+void Buzzer::buzz() {
     PORTH &= ~(1 << 0);
 }
