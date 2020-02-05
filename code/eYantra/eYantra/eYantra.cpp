@@ -5,6 +5,8 @@
  *  Author: Shyam
  */ 
 
+#include "configure.h"
+
 #define F_CPU 14745600
 
 #include <avr/io.h>
@@ -19,6 +21,10 @@
 #include "Sensors/Sensors.h"
 #include "Buzzer/Buzzer.h"
 #include "Map/Map.h"
+
+#define G 6700
+#define j 3
+#define k 0
 
 void enableGlobalInterrupts() {
     SREG |= (1 << 7);
@@ -38,7 +44,7 @@ int main(void) {
     Servo::setAngle(Servo::LEFT, 90);
     Servo::setAngle(Servo::RIGHT, 90);
     Servo::setAngle(Servo::CENTER, 90);
-
+/*
     NodeMap::init(5);
 
     NodeMap::addNode(JUNCTION, Coordinate(0, 0));
@@ -55,17 +61,29 @@ int main(void) {
 
     NodeMap::printAllConnections();
 /**/
-
+// ADC Formula for sharp sensor : res = 5500/(ADC_val-3) (accuracy +- 1cm)
     while(1) {
-        // for (int i = 0; i <= 180; i += 20) {
-        //     Serial::print("Servo angle: ");
-        //     Serial::print(i);
-        //     Serial::print("\n");
-
-        //     Servo::setAngle(Servo::RIGHT, i);
-        //     Servo::setAngle(Servo::LEFT, i);
-        //     Servo::setAngle(Servo::CENTER, i);
-        //     _delay_ms(1000);
-        // }
-    }
+		//float val = (int)ADCInterface::read(3);
+		//float res = k + G/(val-j);
+			//Serial::print(res);
+			//Serial::print("\t");
+			//Serial::print(ProxSensors::readChannel(0));
+			//Serial::print("\n");
+			   //_delay_ms(100);
+			   
+			   Serial::print((int)LineSensors::readSensor(0));
+			   Serial::print("\t");
+			   
+			   Serial::print((int)LineSensors::readSensor(1));
+			   Serial::print("\t");
+			   
+			   Serial::print((int)LineSensors::readSensor(2));
+			   Serial::print("\n");
+         }
+		
+		
+	
+   
+	
 }
+

@@ -9,7 +9,7 @@
 #ifndef CONFIGURE_H_
 #define CONFIGURE_H_
 
-#define LINE_SENSOR_THRESHOLD 500
+#define LINE_SENSOR_THRESHOLD 400
 
 // MOTOR PINS
 #define MOTOR_R_FRONT 3
@@ -24,6 +24,12 @@
 #define SERVO_MIN 921u
 #define SERVO_MAX 4424u
 #define SERVO_TOTAL 36864u
+
+#define LEFT_PICK 50
+#define LEFT_PLACE 0
+#define RIGHT_PICK 80
+#define RIGHT_PLACE 120
+
 
 #define COUNT_1MS 230
 

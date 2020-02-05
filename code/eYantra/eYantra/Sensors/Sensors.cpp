@@ -10,14 +10,14 @@
 #include "../configure.h"
 
 int16_t LineSensors::readSensor(int channel) {
-    return ADCInterface::read(channel);
+    return (ADCInterface::read(channel) > LINE_SENSOR_THRESHOLD)?1:0;
 }
 
 int16_t LineSensors::readLine() {
     int readings[3] = {
-        (readSensor(0) > LINE_SENSOR_THRESHOLD)?0:1,
-        (readSensor(1) > LINE_SENSOR_THRESHOLD)?0:1,
-        (readSensor(2) > LINE_SENSOR_THRESHOLD)?0:1
+        (readSensor(0) > LINE_SENSOR_THRESHOLD)?1:0,
+        (readSensor(1) > LINE_SENSOR_THRESHOLD)?1:0,
+        (readSensor(2) > LINE_SENSOR_THRESHOLD)?1:0
     };
 
     int sum = readings[1] * 1000 + readings[2] * 2000;
@@ -28,5 +28,5 @@ int16_t LineSensors::readLine() {
 
 float ProxSensors::readSensor(int channel) {
     float adcValue = ADCInterface::read(channel + 3);
-    return 1000/adcValue;
+    return 5500/(adcValue - 3);
 }
