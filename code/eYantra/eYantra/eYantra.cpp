@@ -21,10 +21,7 @@
 #include "Sensors/Sensors.h"
 #include "Buzzer/Buzzer.h"
 #include "Map/Map.h"
-
-#define G 6700
-#define j 3
-#define k 0
+#include "Robot/Robot.h"
 
 void enableGlobalInterrupts() {
     SREG |= (1 << 7);
@@ -39,11 +36,72 @@ int main(void) {
     Motor::init();
     Servo::init();
     Buzzer::init();
+    Robot::init(3);
+    LCD::setCursor(0,0);
 
+
+/*
+    Motor::setLeftDirection(Motor::FRONT);
+    Motor::setRightDirection(Motor::FRONT);
+    Motor::setLeftSpeed(255);
+    for (int i = 255; i >= 0; i -= 5) {
+        Motor::setRightSpeed(i);
+        Serial::print(i);
+        Serial::print("\n");
+        LCD::setCursor(0,0);
+        LCD::display(i);
+        _delay_ms(1000);
+    }
+
+    while(1);
+
+    /**/
+
+    /*
+
+    Servo::setAngle(Servo::CENTER, CENTER_TOP);
+    _delay_ms(1000);
+    for (float ang = 90; ang <= 180; ang += 10) {
+        Servo::setAngle(Servo::RIGHT, ang);
+        Servo::setAngle(Servo::LEFT, 180 - ang);
+        Serial::print(ang);
+        Serial::print("\n");
+        _delay_ms(2000);
+    }
+    while (1);
+    /**/
+
+    Servo::setAngle(Servo::CENTER, CENTER_TOP);
+    Servo::setAngle(Servo::LEFT, LEFT_PLACE);
+    Servo::setAngle(Servo::RIGHT, RIGHT_PLACE);
+
+    _delay_ms(10000);
+
+
+    Motor::setLeftDirection(Motor::FRONT);
+    Motor::setRightDirection(Motor::FRONT);
+
+    Motor::setLeftSpeed(255);
+    Motor::setRightSpeed(255);
+    float x;
+
+    do {
+        x = ProxSensors::readSensor(0);
+        Serial::print(x);
+        Serial::print("\n");
+    } while (x >= 16);
+
+    Motor::setLeftDirection(Motor::BACK);
+    Motor::setRightDirection(Motor::BACK);
     _delay_ms(100);
-    Servo::setAngle(Servo::LEFT, 90);
-    Servo::setAngle(Servo::RIGHT, 90);
-    Servo::setAngle(Servo::CENTER, 90);
+
+    Motor::stopMotors();
+
+    _delay_ms(5000);
+    Servo::pickSequence();
+    while(1);
+
+
 /*
     NodeMap::init(5);
 
@@ -61,29 +119,8 @@ int main(void) {
 
     NodeMap::printAllConnections();
 /**/
-// ADC Formula for sharp sensor : res = 5500/(ADC_val-3) (accuracy +- 1cm)
     while(1) {
-		//float val = (int)ADCInterface::read(3);
-		//float res = k + G/(val-j);
-			//Serial::print(res);
-			//Serial::print("\t");
-			//Serial::print(ProxSensors::readChannel(0));
-			//Serial::print("\n");
-			   //_delay_ms(100);
-			   
-			   Serial::print((int)LineSensors::readSensor(0));
-			   Serial::print("\t");
-			   
-			   Serial::print((int)LineSensors::readSensor(1));
-			   Serial::print("\t");
-			   
-			   Serial::print((int)LineSensors::readSensor(2));
-			   Serial::print("\n");
-         }
-		
-		
-	
-   
-	
+        //Robot::control();
+    }
 }
 

@@ -26,8 +26,9 @@ class Motor {
 
     static void stopLeftMotor();
     static void stopRightMotor();
+    static void stopMotors();
 
-    static void applyPIDCorrection(float);
+    static void applyPIDCorrection(int32_t);
 };
 
 

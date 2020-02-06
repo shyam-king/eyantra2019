@@ -18,17 +18,19 @@
 #define MOTOR_L_FRONT 1
 #define MOTOR_L_BACK 0
 
-#define MOTOR_L_SPEED OCR0B
-#define MOTOR_R_SPEED OCR0A
+#define MOTOR_L_SPEED OCR5A
+#define MOTOR_R_SPEED OCR5B
 
 #define SERVO_MIN 921u
 #define SERVO_MAX 4424u
 #define SERVO_TOTAL 36864u
 
-#define LEFT_PICK 50
+#define LEFT_PICK 65
 #define LEFT_PLACE 0
-#define RIGHT_PICK 80
+#define RIGHT_PICK 65
 #define RIGHT_PLACE 120
+#define CENTER_TOP 150
+#define CENTER_BOTTOM 10
 
 
 #define COUNT_1MS 230

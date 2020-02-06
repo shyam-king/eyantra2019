@@ -30,6 +30,8 @@ struct Coordinate {
     uint8_t calculateDistance(Coordinate);
 };
 
+bool operator ==(Coordinate, Coordinate);
+
 class Node {
     NODETYPE type;
     uint8_t index;
@@ -41,13 +43,20 @@ class Node {
 };
 
 class NodeMap {
+    friend class Robot;
+
     static Node* nodes;
     static uint8_t size;
     static int capacity;
     static uint8_t* nodeLinks;
-    static Node* colorNodes;
+
+    static Node** materialNodes;
+    static Node** houseNodes;
+
+    static uint8_t nHouses, nMaterials;
 
     static bool constructedLinks;
+    static Coordinate getClosestMaterial(NODETYPE, Coordinate);
 
     public:
 
@@ -55,6 +64,8 @@ class NodeMap {
     static uint8_t addNode(NODETYPE, Coordinate);
     static void constructNodes();
     static void connectNodes(uint8_t, uint8_t);
+
+    static void findPath(Coordinate, Coordinate, char*);
 
     static void clearMem();
 

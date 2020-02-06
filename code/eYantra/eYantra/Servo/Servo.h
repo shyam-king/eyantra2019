@@ -25,6 +25,7 @@ class Servo {
 
     static void init();
     static void setAngle(Channel channel, float angle);
+    static void pickSequence();
 };
 
 

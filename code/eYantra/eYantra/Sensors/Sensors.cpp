@@ -15,12 +15,12 @@ int16_t LineSensors::readSensor(int channel) {
 
 int16_t LineSensors::readLine() {
     int readings[3] = {
-        (readSensor(0) > LINE_SENSOR_THRESHOLD)?1:0,
-        (readSensor(1) > LINE_SENSOR_THRESHOLD)?1:0,
-        (readSensor(2) > LINE_SENSOR_THRESHOLD)?1:0
+        readSensor(0),
+        readSensor(1),
+        readSensor(2)
     };
 
-    int sum = readings[1] * 1000 + readings[2] * 2000;
+    int sum = readings[1] * 100 + readings[2] * 200;
     sum /= readings[0] + readings[1] + readings[2];
 
     return sum;

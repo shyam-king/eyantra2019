@@ -6,12 +6,14 @@
  */ 
 
 #include "PID.h"
+#include "../UART/UART.h"
+#include <stdint.h>
 
 int* PID::currentValue = 0;
 int PID::targetValue = 0;
 float PID::kp = 0;
 float PID::kd = 0;
-float PID::lastError = 0;
+int32_t PID::lastError = 0;
 
 void PID::init(int* _currentValue, int _targetValue, float _kp, float _kd) {
     currentValue = _currentValue;
@@ -20,9 +22,9 @@ void PID::init(int* _currentValue, int _targetValue, float _kp, float _kd) {
     kd = _kd;
 }
 
-float PID::calculate() {
-    float error = (*currentValue) - targetValue;
-    float correction = kp * (error) + kd * (error - lastError);
+int32_t PID::calculate() {
+    int32_t error = (*currentValue) - targetValue;
+    int32_t correction = kp * (error) + kd * (error - lastError);
     
     lastError = error;
 

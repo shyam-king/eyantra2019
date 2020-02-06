@@ -16,11 +16,11 @@ class PID {
     static int targetValue;
     static float kp, kd; 
 
-    static float lastError;
+    static int32_t lastError;
     public:
     
     static void init(int*, int, float, float);
-    static float calculate();
+    static int32_t calculate();
 };
 
 

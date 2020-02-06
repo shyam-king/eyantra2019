@@ -7,6 +7,7 @@
 
 #include "Servo.h"
 #include <avr/io.h>
+#include <avr/delay.h>
 
 /*
     using Timer4
@@ -55,4 +56,11 @@ void Servo::setAngle(Channel channel, float angle) {
 	
 }
 
-
+void Servo::pickSequence() {
+    setAngle(CENTER, CENTER_BOTTOM);
+    _delay_ms(10000);
+    setAngle(LEFT, LEFT_PICK);
+    setAngle(RIGHT, RIGHT_PICK);
+    _delay_ms(5000);
+    setAngle(CENTER, CENTER_TOP);
+}

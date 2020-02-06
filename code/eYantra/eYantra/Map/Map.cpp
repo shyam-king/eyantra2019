@@ -12,8 +12,14 @@
 #define abs(x) (((x) > 0) ? (x) : -(x))
 
 Node* NodeMap::nodes = 0;
+Node** NodeMap::houseNodes = 0;
+Node** NodeMap::materialNodes = 0;
+
 uint8_t NodeMap::size = 0;
+uint8_t NodeMap::nHouses = 0;
+uint8_t NodeMap::nMaterials = 0;
 int NodeMap::capacity = 0;
+
 uint8_t* NodeMap::nodeLinks = 0;
 bool NodeMap::constructedLinks = false;
 
@@ -24,6 +30,10 @@ Coordinate::Coordinate(int _x, int _y) {
 
 uint8_t Coordinate::calculateDistance(Coordinate b) {
     return abs(this->x - b.x) + abs(this->y - b.y);
+}
+
+bool operator==(Coordinate a, Coordinate b) {
+    return a.calculateDistance(b) == 0;
 }
 
 Node::Node() {
@@ -40,6 +50,8 @@ Node::Node(NODETYPE _type, uint8_t i, Coordinate c) {
 void NodeMap::init(int _capacity) {
     capacity = _capacity;
     nodes = (Node*)malloc(sizeof(Node) * capacity);
+    materialNodes = (Node**)malloc(sizeof(Node*) * capacity);
+    houseNodes = (Node**)malloc(sizeof(Node*) * capacity);
     size = 0;
 }
 
@@ -50,6 +62,14 @@ uint8_t NodeMap::addNode(NODETYPE type, Coordinate pos) {
     nodes[size].index = size;
     nodes[size].position = pos;
     nodes[size].type = type;
+
+    if (type >= H1 && type <= H5) {
+        houseNodes[nHouses++] = nodes + size; 
+    }
+    else if (type >= MAT_BLACK && type <= MAT_PINK) {
+       materialNodes[nMaterials++] = nodes + size; 
+    }
+
     return size++;
 }
 
@@ -66,6 +86,8 @@ void NodeMap::connectNodes(uint8_t i, uint8_t j) {
 void NodeMap::clearMem() {
     free(nodes);
     free(nodeLinks);
+    free(houseNodes);
+    free(materialNodes);
 }
 
 void NodeMap::printAllConnections() {
@@ -77,4 +99,24 @@ void NodeMap::printAllConnections() {
         }
         Serial::print("\n");
     }
+}
+
+Coordinate NodeMap::getClosestMaterial(NODETYPE material, Coordinate fromPos) {
+    uint8_t minDistance = 255;
+    Coordinate ans = fromPos, temp;
+    for (int i = 0; i < nMaterials; ++i) {
+        if ((*(materialNodes + i)) -> type == material) {
+            temp = (*(materialNodes + i)) -> position;
+            if (temp.calculateDistance(fromPos) < minDistance) {
+                minDistance = temp.calculateDistance(fromPos);
+                ans = temp;
+            }
+        }
+    }
+
+    return ans;
+}
+
+void NodeMap::findPath(Coordinate from, Coordinate to, char* path) {
+    
 }
